@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.util.Date;
+import org.knowm.xchange.binance.dto.trade.margin.IsIsolated;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class BinanceOrder {
@@ -22,6 +23,7 @@ public final class BinanceOrder {
   public final BigDecimal stopPrice;
   public final BigDecimal icebergQty;
   public final long time;
+  public final IsIsolated isIsolated;
 
   public BinanceOrder(
       @JsonProperty("symbol") String symbol,
@@ -37,6 +39,7 @@ public final class BinanceOrder {
       @JsonProperty("side") OrderSide side,
       @JsonProperty("stopPrice") BigDecimal stopPrice,
       @JsonProperty("icebergQty") BigDecimal icebergQty,
+      @JsonProperty("isIsolated") IsIsolated isIsolated,
       @JsonProperty("time") long time) {
     this.symbol = symbol;
     this.orderId = orderId;
@@ -51,6 +54,7 @@ public final class BinanceOrder {
     this.side = side;
     this.stopPrice = stopPrice;
     this.icebergQty = icebergQty;
+    this.isIsolated = isIsolated;
     this.time = time;
   }
 

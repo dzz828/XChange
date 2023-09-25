@@ -13,6 +13,8 @@ import org.knowm.xchange.binance.BinanceErrorAdapter;
 import org.knowm.xchange.binance.BinanceExchange;
 import org.knowm.xchange.binance.dto.BinanceException;
 import org.knowm.xchange.binance.dto.trade.*;
+import org.knowm.xchange.binance.dto.trade.margin.IsIsolated;
+import org.knowm.xchange.binance.dto.trade.margin.MarginSideEffectType;
 import org.knowm.xchange.client.ResilienceRegistries;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.derivative.FuturesContract;
@@ -147,22 +149,57 @@ public class BinanceTradeService extends BinanceTradeServiceRaw implements Trade
                     null)
                 .getOrderId();
       } else {
-        orderId =
-            Long.toString(
-                newOrder(
-                        order.getInstrument(),
-                        BinanceAdapters.convert(order.getType()),
-                        type,
-                        tif,
-                        order.getOriginalAmount(),
-                        quoteOrderQty,
-                        limitPrice,
-                        order.getUserReference(),
-                        stopPrice,
-                        trailingDelta,
-                        null,
-                        null)
-                    .orderId);
+        boolean isMargin = order.hasFlag(org.knowm.xchange.binance.dto.trade.BinanceOrderFlags.MARGIN);
+
+        if (isMargin) {
+
+          IsIsolated isIsolated = order.getOrderFlags().stream()
+              .filter(f -> f instanceof IsIsolated)
+              .map(f -> (IsIsolated) f)
+              .findFirst()
+              .orElse(IsIsolated.CROSS);
+
+          MarginSideEffectType marginSideEffectType = order.getOrderFlags().stream()
+              .filter(f -> f instanceof MarginSideEffectType)
+              .map(f -> (MarginSideEffectType) f)
+              .findFirst()
+              .orElse(MarginSideEffectType.NO_SIDE_EFFECT);
+
+          orderId =
+              Long.toString(
+                  newMarginOrder(
+                      order.getInstrument(),
+                      BinanceAdapters.convert(order.getType()),
+                      isIsolated,
+                      type,
+                      tif,
+                      order.getOriginalAmount(),
+                      limitPrice,
+                      order.getUserReference(),
+                      stopPrice,
+                      null,
+                      null,
+                      marginSideEffectType)
+                      .orderId);
+
+        } else {
+          orderId =
+              Long.toString(
+                  newOrder(
+                      order.getInstrument(),
+                      BinanceAdapters.convert(order.getType()),
+                      type,
+                      tif,
+                      order.getOriginalAmount(),
+                      quoteOrderQty,
+                      limitPrice,
+                      order.getUserReference(),
+                      stopPrice,
+                      trailingDelta,
+                      null,
+                      null)
+                      .orderId);
+        }
       }
       return orderId;
     } catch (BinanceException e) {
@@ -205,18 +242,8 @@ public class BinanceTradeService extends BinanceTradeServiceRaw implements Trade
   @Override
   public boolean cancelOrder(CancelOrderParams params) throws IOException {
     try {
-      if (!(params instanceof CancelOrderByInstrument)
-          && !(params instanceof CancelOrderByIdParams)) {
-        throw new ExchangeException(
-            "You need to provide the currency pair and the order id to cancel an order.");
-      }
-      assert params instanceof CancelOrderByInstrument;
-      CancelOrderByInstrument paramInstrument = (CancelOrderByInstrument) params;
-      CancelOrderByIdParams paramId = (CancelOrderByIdParams) params;
-      cancelOrderAllProducts(
-          paramInstrument.getInstrument(), BinanceAdapters.id(paramId.getOrderId()), null, null);
-
-      return true;
+      BinanceCancelledOrder response = cancelOrderAllProducts(params);
+      return OrderStatus.CANCELED.toString().equalsIgnoreCase(response.status);
     } catch (BinanceException e) {
       throw BinanceErrorAdapter.adapt(e);
     }
@@ -300,10 +327,7 @@ public class BinanceTradeService extends BinanceTradeServiceRaw implements Trade
 
         orders.add(
             BinanceAdapters.adaptOrder(
-                orderStatusAllProducts(
-                    orderQueryParamInstrument.getInstrument(),
-                    BinanceAdapters.id(orderQueryParamInstrument.getOrderId()),
-                    null),
+                orderStatusAllProducts(orderQueryParamInstrument),
                 orderQueryParamInstrument.getInstrument() instanceof FuturesContract));
       }
       return orders;

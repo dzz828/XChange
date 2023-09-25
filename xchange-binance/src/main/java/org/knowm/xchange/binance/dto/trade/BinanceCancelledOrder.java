@@ -2,6 +2,7 @@ package org.knowm.xchange.binance.dto.trade;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.knowm.xchange.binance.dto.trade.margin.IsIsolated;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class BinanceCancelledOrder {
@@ -18,6 +19,7 @@ public final class BinanceCancelledOrder {
   public String timeInForce;
   public String type;
   public String side;
+  public IsIsolated isIsolated;
 
   public BinanceCancelledOrder(
       @JsonProperty("symbol") String symbol,
@@ -31,7 +33,8 @@ public final class BinanceCancelledOrder {
       @JsonProperty("status") String status,
       @JsonProperty("timeInForce") String timeInForce,
       @JsonProperty("type") String type,
-      @JsonProperty("side") String side) {
+      @JsonProperty("side") String side,
+      @JsonProperty("isIsolated") IsIsolated isIsolated) {
     super();
     this.symbol = symbol;
     this.origClientOrderId = origClientOrderId;
@@ -45,5 +48,6 @@ public final class BinanceCancelledOrder {
     this.timeInForce = timeInForce;
     this.type = type;
     this.side = side;
+    this.isIsolated = isIsolated;
   }
 }

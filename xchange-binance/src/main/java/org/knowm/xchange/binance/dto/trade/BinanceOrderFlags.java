@@ -4,5 +4,6 @@ import org.knowm.xchange.dto.Order.IOrderFlags;
 
 public enum BinanceOrderFlags implements IOrderFlags {
   LIMIT_MAKER,
-  REDUCE_ONLY
+  REDUCE_ONLY,
+  MARGIN,
 }

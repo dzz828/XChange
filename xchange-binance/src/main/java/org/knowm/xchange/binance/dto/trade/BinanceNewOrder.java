@@ -3,6 +3,7 @@ package org.knowm.xchange.binance.dto.trade;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.util.List;
+import org.knowm.xchange.binance.dto.trade.margin.IsIsolated;
 
 public final class BinanceNewOrder {
 
@@ -24,6 +25,9 @@ public final class BinanceNewOrder {
   public final TimeInForce timeInForce;
   public final OrderType type;
   public final OrderSide side;
+  public final BigDecimal marginBuyBorrowAmount;
+  public final String marginBuyBorrowAsset;
+  public final IsIsolated isIsolated;
   public final List<BinanceTrade> fills;
 
   public BinanceNewOrder(
@@ -38,6 +42,9 @@ public final class BinanceNewOrder {
       @JsonProperty("timeInForce") TimeInForce timeInForce,
       @JsonProperty("type") OrderType type,
       @JsonProperty("side") OrderSide side,
+      @JsonProperty("marginBuyBorrowAmount") BigDecimal marginBuyBorrowAmount,
+      @JsonProperty("marginBuyBorrowAsset") String marginBuyBorrowAsset,
+      @JsonProperty("isIsolated") IsIsolated isIsolated,
       @JsonProperty("fills") List<BinanceTrade> fills) {
     super();
     this.symbol = symbol;
@@ -51,6 +58,9 @@ public final class BinanceNewOrder {
     this.timeInForce = timeInForce;
     this.type = type;
     this.side = side;
+    this.marginBuyBorrowAmount = marginBuyBorrowAmount;
+    this.marginBuyBorrowAsset = marginBuyBorrowAsset;
+    this.isIsolated = isIsolated;
     this.fills = fills;
   }
 }

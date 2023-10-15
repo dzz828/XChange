@@ -1,5 +1,6 @@
 package org.knowm.xchange.binance.dto.marketdata;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.util.Collections;
@@ -16,7 +17,7 @@ public final class BinanceOrderbook {
   public final SortedMap<BigDecimal, BigDecimal> asks;
 
   public BinanceOrderbook(
-      @JsonProperty("lastUpdateId") long lastUpdateId,
+      @JsonProperty("lastUpdateId") @JsonAlias("u") long lastUpdateId,
       @JsonProperty("bids") List<Object[]> bidsJson,
       @JsonProperty("asks") List<Object[]> asksJson) {
     this.lastUpdateId = lastUpdateId;

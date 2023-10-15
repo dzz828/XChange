@@ -1,20 +1,43 @@
 package info.bitrich.xchangestream.okex;
 
-import static info.bitrich.xchangestream.okex.OkexStreamingService.*;
+import static info.bitrich.xchangestream.okex.OkexStreamingService.FUNDING_RATE;
+import static info.bitrich.xchangestream.okex.OkexStreamingService.OPTION_SUMMARY;
+import static info.bitrich.xchangestream.okex.OkexStreamingService.ORDERBOOK;
+import static info.bitrich.xchangestream.okex.OkexStreamingService.ORDERBOOK5;
+import static info.bitrich.xchangestream.okex.OkexStreamingService.TICKERS;
+import static info.bitrich.xchangestream.okex.OkexStreamingService.TRADES;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
 import info.bitrich.xchangestream.service.netty.StreamingObjectMapperHelper;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 import java.sql.Timestamp;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.tuple.Pair;
+import org.knowm.xchange.derivative.OptionsContract;
 import org.knowm.xchange.dto.Order;
-import org.knowm.xchange.dto.marketdata.*;
+import org.knowm.xchange.dto.marketdata.FundingRate;
+import org.knowm.xchange.dto.marketdata.OrderBook;
+import org.knowm.xchange.dto.marketdata.OrderBookUpdate;
+import org.knowm.xchange.dto.marketdata.Ticker;
+import org.knowm.xchange.dto.marketdata.Trade;
 import org.knowm.xchange.instrument.Instrument;
 import org.knowm.xchange.okex.OkexAdapters;
-import org.knowm.xchange.okex.dto.marketdata.*;
+import org.knowm.xchange.okex.dto.marketdata.OkexFundingRate;
+import org.knowm.xchange.okex.dto.marketdata.OkexOptionSummary;
+import org.knowm.xchange.okex.dto.marketdata.OkexOrderbook;
+import org.knowm.xchange.okex.dto.marketdata.OkexPublicOrder;
+import org.knowm.xchange.okex.dto.marketdata.OkexTicker;
+import org.knowm.xchange.okex.dto.marketdata.OkexTrade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,20 +49,70 @@ public class OkexStreamingMarketDataService implements StreamingMarketDataServic
 
   private final ObjectMapper mapper = StreamingObjectMapperHelper.getObjectMapper();
   private final Map<Instrument, PublishSubject<List<OrderBookUpdate>>> orderBookUpdatesSubscriptions;
+  private final Map<String, Observable<JsonNode>> optionSummarySubscription;
 
   public OkexStreamingMarketDataService(OkexStreamingService service) {
     this.service = service;
     this.orderBookUpdatesSubscriptions = new ConcurrentHashMap<>();
+    this.optionSummarySubscription = new ConcurrentHashMap<>();
   }
 
   private final Map<String, OrderBook> orderBookMap = new HashMap<>();
 
   @Override
   public Observable<Ticker> getTicker(Instrument instrument, Object... args) {
-    String channelUniqueId = TICKERS + OkexAdapters.adaptInstrument(instrument);
+    String tickerChannelId = TICKERS + OkexAdapters.adaptInstrument(instrument);
 
-    return service
-        .subscribeChannel(channelUniqueId)
+    Observable<JsonNode>  tickerData = service
+        .subscribeChannel(tickerChannelId);
+
+    if (instrument instanceof OptionsContract) {
+      String[] optionSymbolStringSplits = OkexAdapters.adaptInstrument(instrument).split("-");
+      String optionSummaryChannelId = OPTION_SUMMARY + String.format("%s-%s", optionSymbolStringSplits[0], optionSymbolStringSplits[1]);
+
+      Map<String, OkexOptionSummary> lastOptionSummaryMap = new ConcurrentHashMap<>();
+
+      Observable<JsonNode> optionSummaryData = optionSummarySubscription.computeIfAbsent(optionSummaryChannelId, service::subscribeChannel);
+
+      return Observable.combineLatest(optionSummaryData, tickerData, Pair::of)
+          .filter(p -> p.getLeft().has("data") && p.getRight().has("data"))
+          .flatMap(p -> {
+            List<OkexTicker> okexTickers =
+                mapper.treeToValue(
+                    p.getRight().get("data"),
+                    mapper
+                        .getTypeFactory()
+                        .constructCollectionType(List.class, OkexTicker.class));
+
+            List<OkexOptionSummary> okexOptionSummaries =
+                mapper.treeToValue(
+                    p.getLeft().get("data"),
+                    mapper
+                        .getTypeFactory()
+                        .constructCollectionType(List.class, OkexOptionSummary.class));
+
+            Map<String, OkexOptionSummary> optionSummaryMap = okexOptionSummaries.stream()
+                .collect(Collectors.toMap(OkexOptionSummary::getInstId, s -> s, (a, b) -> a));
+
+            return Observable.fromIterable(okexTickers)
+                .flatMap(t -> {
+                  OkexOptionSummary summary = optionSummaryMap.get(t.getInstrumentId());
+                  if (summary != null) {
+                    lastOptionSummaryMap.put(t.getInstrumentId(), summary);
+                  }
+
+                  if (lastOptionSummaryMap.get(t.getInstrumentId()) == null) {
+                    return Observable.empty();
+                  }
+
+                  return Observable.just(OkexAdapters.adaptTicker(t, lastOptionSummaryMap.get(t.getInstrumentId())));
+                });
+          });
+
+
+    }
+
+    return tickerData
         .filter(message -> message.has("data"))
         .flatMap(
             jsonNode -> {

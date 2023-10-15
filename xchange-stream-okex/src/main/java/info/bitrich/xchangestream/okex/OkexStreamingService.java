@@ -41,6 +41,7 @@ public class OkexStreamingService extends JsonNettyStreamingService {
     public static final String ORDERBOOK5 = "books5";
     public static final String FUNDING_RATE = "funding-rate";
     public static final String TICKERS = "tickers";
+    public static final String OPTION_SUMMARY = "opt-summary";
     public static final String USERTRADES = "orders";
 
     private final Observable<Long> pingPongSrc = Observable.interval(15, 15, TimeUnit.SECONDS);
@@ -132,6 +133,8 @@ public class OkexStreamingService extends JsonNettyStreamingService {
         if(message.has("arg")){
             if(message.get("arg").has("channel") && message.get("arg").has("instId")){
                 channelName = message.get("arg").get("channel").asText()+message.get("arg").get("instId").asText();
+            } else if (message.get("arg").has("channel") && message.get("arg").has("instFamily")) {
+                channelName = message.get("arg").get("channel").asText()+message.get("arg").get("instFamily").asText();
             }
         }
         return channelName;
@@ -149,17 +152,19 @@ public class OkexStreamingService extends JsonNettyStreamingService {
 
     private OkexSubscribeMessage.SubscriptionTopic getTopic(String channelName){
         if(channelName.contains(ORDERBOOK5)){
-            return new OkexSubscribeMessage.SubscriptionTopic(ORDERBOOK5,null,null,channelName.replace(ORDERBOOK5,""));
+            return new OkexSubscribeMessage.SubscriptionTopic(ORDERBOOK5,null,null,channelName.replace(ORDERBOOK5,""), null);
         } else if(channelName.contains(ORDERBOOK)){
-            return new OkexSubscribeMessage.SubscriptionTopic(ORDERBOOK,null,null,channelName.replace(ORDERBOOK,""));
+            return new OkexSubscribeMessage.SubscriptionTopic(ORDERBOOK,null,null,channelName.replace(ORDERBOOK,""), null);
         } else if(channelName.contains(TRADES)){
-            return new OkexSubscribeMessage.SubscriptionTopic(TRADES,null,null,channelName.replace(TRADES,""));
+            return new OkexSubscribeMessage.SubscriptionTopic(TRADES,null,null,channelName.replace(TRADES,""), null);
         } else if(channelName.contains(TICKERS)){
-            return new OkexSubscribeMessage.SubscriptionTopic(TICKERS,null,null,channelName.replace(TICKERS,""));
+            return new OkexSubscribeMessage.SubscriptionTopic(TICKERS,null,null,channelName.replace(TICKERS,""), null);
         } else if (channelName.contains(USERTRADES)){
-            return new OkexSubscribeMessage.SubscriptionTopic(USERTRADES, OkexInstType.ANY,null,channelName.replace(USERTRADES,""));
+            return new OkexSubscribeMessage.SubscriptionTopic(USERTRADES, OkexInstType.ANY,null,channelName.replace(USERTRADES,""), null);
         } else if(channelName.contains(FUNDING_RATE)){
-            return new OkexSubscribeMessage.SubscriptionTopic(FUNDING_RATE, null,null,channelName.replace(FUNDING_RATE,""));
+            return new OkexSubscribeMessage.SubscriptionTopic(FUNDING_RATE, null,null,channelName.replace(FUNDING_RATE,""), null);
+        } else if(channelName.contains(OPTION_SUMMARY)){
+            return new OkexSubscribeMessage.SubscriptionTopic(OPTION_SUMMARY, null,null, null, channelName.replace(OPTION_SUMMARY,""));
         } else {
             throw new NotYetImplementedForExchangeException("ChannelName: "+channelName+" has not implemented yet on "+this.getClass().getSimpleName());
         }

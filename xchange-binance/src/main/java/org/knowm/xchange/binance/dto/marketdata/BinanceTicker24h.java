@@ -3,8 +3,8 @@ package org.knowm.xchange.binance.dto.marketdata;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.util.Date;
-
 import lombok.Getter;
+import lombok.Setter;
 import org.knowm.xchange.binance.BinanceAdapters;
 import org.knowm.xchange.dto.marketdata.Ticker;
 import org.knowm.xchange.instrument.Instrument;
@@ -33,6 +33,21 @@ public final class BinanceTicker24h {
   private final long lastId;
   private final long count;
   private final String symbol;
+
+  @Setter
+  private BigDecimal buyIV;
+  @Setter
+  private BigDecimal sellIV;
+  @Setter
+  private BigDecimal delta;
+  @Setter
+  private BigDecimal theta;
+  @Setter
+  private BigDecimal gamma;
+  @Setter
+  private BigDecimal vega;
+  @Setter
+  private BigDecimal iv;
 
   // The curency pair that is unfortunately not returned in the response
   private Instrument pair;
@@ -110,6 +125,13 @@ public final class BinanceTicker24h {
               .quoteVolume(quoteVolume)
               .timestamp(closeTime > 0 ? new Date(closeTime) : null)
               .percentageChange(priceChangePercent)
+              .iv(iv)
+              .buyVol(buyIV)
+              .sellVol(sellIV)
+              .deltaBS(delta)
+              .gammaBS(gamma)
+              .vegaBS(vega)
+              .thetaBS(theta)
               .build();
     }
     return ticker;

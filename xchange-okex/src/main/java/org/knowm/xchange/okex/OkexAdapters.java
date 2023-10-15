@@ -1,5 +1,19 @@
 package org.knowm.xchange.okex;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.knowm.xchange.currency.Currency;
 import org.knowm.xchange.currency.CurrencyPair;
@@ -11,24 +25,45 @@ import org.knowm.xchange.dto.account.Balance;
 import org.knowm.xchange.dto.account.OpenPosition;
 import org.knowm.xchange.dto.account.OpenPositions;
 import org.knowm.xchange.dto.account.Wallet;
-import org.knowm.xchange.dto.marketdata.*;
+import org.knowm.xchange.dto.marketdata.CandleStick;
+import org.knowm.xchange.dto.marketdata.CandleStickData;
+import org.knowm.xchange.dto.marketdata.FundingRate;
+import org.knowm.xchange.dto.marketdata.OrderBook;
+import org.knowm.xchange.dto.marketdata.Ticker;
+import org.knowm.xchange.dto.marketdata.Ticker.Builder;
+import org.knowm.xchange.dto.marketdata.Trade;
+import org.knowm.xchange.dto.marketdata.Trades;
 import org.knowm.xchange.dto.meta.CurrencyMetaData;
 import org.knowm.xchange.dto.meta.ExchangeMetaData;
 import org.knowm.xchange.dto.meta.InstrumentMetaData;
 import org.knowm.xchange.dto.meta.WalletHealth;
-import org.knowm.xchange.dto.trade.*;
+import org.knowm.xchange.dto.trade.LimitOrder;
+import org.knowm.xchange.dto.trade.MarketOrder;
+import org.knowm.xchange.dto.trade.OpenOrders;
+import org.knowm.xchange.dto.trade.UserTrade;
+import org.knowm.xchange.dto.trade.UserTrades;
 import org.knowm.xchange.instrument.Instrument;
 import org.knowm.xchange.okex.dto.OkexInstType;
-import org.knowm.xchange.okex.dto.account.*;
-import org.knowm.xchange.okex.dto.marketdata.*;
 import org.knowm.xchange.okex.dto.OkexResponse;
-import org.knowm.xchange.okex.dto.trade.*;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
+import org.knowm.xchange.okex.dto.account.OkexAccountPositionRisk;
+import org.knowm.xchange.okex.dto.account.OkexAssetBalance;
+import org.knowm.xchange.okex.dto.account.OkexPosition;
+import org.knowm.xchange.okex.dto.account.OkexTradeFee;
+import org.knowm.xchange.okex.dto.account.OkexWalletBalance;
+import org.knowm.xchange.okex.dto.marketdata.OkexCandleStick;
+import org.knowm.xchange.okex.dto.marketdata.OkexCurrency;
+import org.knowm.xchange.okex.dto.marketdata.OkexFundingRate;
+import org.knowm.xchange.okex.dto.marketdata.OkexInstrument;
+import org.knowm.xchange.okex.dto.marketdata.OkexOptionSummary;
+import org.knowm.xchange.okex.dto.marketdata.OkexOrderbook;
+import org.knowm.xchange.okex.dto.marketdata.OkexPublicOrder;
+import org.knowm.xchange.okex.dto.marketdata.OkexTicker;
+import org.knowm.xchange.okex.dto.marketdata.OkexTrade;
+import org.knowm.xchange.okex.dto.trade.OkexAmendOrderRequest;
+import org.knowm.xchange.okex.dto.trade.OkexOrderDetails;
+import org.knowm.xchange.okex.dto.trade.OkexOrderFlags;
+import org.knowm.xchange.okex.dto.trade.OkexOrderRequest;
+import org.knowm.xchange.okex.dto.trade.OkexOrderType;
 
 /** Author: Max Gao (gaamox@tutanota.com) Created: 08-06-2021 */
 public class OkexAdapters {
@@ -206,22 +241,46 @@ public class OkexAdapters {
   }
 
   public static Ticker adaptTicker(OkexTicker okexTicker) {
-    return new Ticker.Builder()
-            .instrument(adaptOkexInstrumentId(okexTicker.getInstrumentId()))
-            .open(okexTicker.getOpen24h())
-            .last(okexTicker.getLast())
-            .bid(okexTicker.getBidPrice())
-            .ask(okexTicker.getAskPrice())
-            .high(okexTicker.getHigh24h())
-            .low(okexTicker.getLow24h())
-            // .vwap(null)
-            .volume(okexTicker.getVolume24h())
-            .quoteVolume(okexTicker.getVolumeCurrency24h())
-            .timestamp(okexTicker.getTimestamp())
-            .bidSize(okexTicker.getBidSize())
-            .askSize(okexTicker.getAskSize())
-            .percentageChange(null)
+    return adaptTikerToBuilder(okexTicker)
             .build();
+  }
+
+  private static Builder adaptTikerToBuilder(OkexTicker okexTicker) {
+    return new Builder()
+        .instrument(adaptOkexInstrumentId(okexTicker.getInstrumentId()))
+        .open(okexTicker.getOpen24h())
+        .last(okexTicker.getLast())
+        .bid(okexTicker.getBidPrice())
+        .ask(okexTicker.getAskPrice())
+        .high(okexTicker.getHigh24h())
+        .low(okexTicker.getLow24h())
+        // .vwap(null)
+        .volume(okexTicker.getVolume24h())
+        .quoteVolume(okexTicker.getVolumeCurrency24h())
+        .timestamp(okexTicker.getTimestamp())
+        .bidSize(okexTicker.getBidSize())
+        .askSize(okexTicker.getAskSize())
+        .percentageChange(null);
+  }
+
+  public static Ticker adaptTicker(OkexTicker okexTicker, OkexOptionSummary okexOptionSummary) {
+    if (okexOptionSummary == null) {
+      return adaptTikerToBuilder(okexTicker).build();
+    }
+    return adaptTikerToBuilder(okexTicker)
+        .iv(okexOptionSummary.getVolLv())
+        .buyVol(okexOptionSummary.getBidVol())
+        .sellVol(okexOptionSummary.getAskVol())
+        .markVol(okexOptionSummary.getMarkVol())
+        .delta(okexOptionSummary.getDelta())
+        .gamma(okexOptionSummary.getGamma())
+        .vega(okexOptionSummary.getVega())
+        .theta(okexOptionSummary.getTheta())
+        .deltaBS(okexOptionSummary.getDeltaBS())
+        .gammaBS(okexOptionSummary.getGammaBS())
+        .vegaBS(okexOptionSummary.getVegaBS())
+        .thetaBS(okexOptionSummary.getThetaBS())
+        .build();
   }
 
   public static Instrument adaptOkexInstrumentId(String instrumentId) {

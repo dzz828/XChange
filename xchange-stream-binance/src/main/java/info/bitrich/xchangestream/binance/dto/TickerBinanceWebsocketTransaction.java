@@ -7,7 +7,7 @@ import org.knowm.xchange.binance.dto.marketdata.BinanceTicker24h;
 
 public class TickerBinanceWebsocketTransaction extends ProductBinanceWebSocketTransaction {
 
-  private final BinanceTicker24h ticker;
+  protected final BinanceTicker24h ticker;
 
   public TickerBinanceWebsocketTransaction(
       @JsonProperty("e") String eventType,

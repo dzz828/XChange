@@ -14,6 +14,7 @@ import org.knowm.xchange.instrument.Instrument;
  */
 public class ProductSubscription {
   private final List<Instrument> orderBook;
+  private final List<Instrument> partialOrderBook;
   private final List<Instrument> trades;
   private final List<Instrument> ticker;
   private final List<Instrument> userTrades;
@@ -23,6 +24,7 @@ public class ProductSubscription {
 
   private ProductSubscription(ProductSubscriptionBuilder builder) {
     this.orderBook = asList(builder.orderBook);
+    this.partialOrderBook = asList(builder.partialOrderBook);
     this.trades = asList(builder.trades);
     this.ticker = asList(builder.ticker);
     this.orders = asList(builder.orders);
@@ -39,6 +41,10 @@ public class ProductSubscription {
 
   public List<Instrument> getOrderBook() {
     return orderBook;
+  }
+
+  public List<Instrument> getPartialOrderBook() {
+    return partialOrderBook;
   }
 
   public List<Instrument> getTrades() {
@@ -83,6 +89,7 @@ public class ProductSubscription {
 
   public static class ProductSubscriptionBuilder {
     private final Set<Instrument> orderBook;
+    private final Set<Instrument> partialOrderBook;
     private final Set<Instrument> trades;
     private final Set<Instrument> ticker;
     private final Set<Instrument> userTrades;
@@ -92,6 +99,7 @@ public class ProductSubscription {
 
     private ProductSubscriptionBuilder() {
       orderBook = new HashSet<>();
+      partialOrderBook = new HashSet<>();
       trades = new HashSet<>();
       ticker = new HashSet<>();
       orders = new HashSet<>();
@@ -102,6 +110,11 @@ public class ProductSubscription {
 
     public ProductSubscriptionBuilder addOrderbook(Instrument pair) {
       orderBook.add(pair);
+      return this;
+    }
+
+    public ProductSubscriptionBuilder addPartialOrderbook(Instrument pair) {
+      partialOrderBook.add(pair);
       return this;
     }
 
@@ -136,6 +149,7 @@ public class ProductSubscription {
 
     public ProductSubscriptionBuilder addAll(Instrument pair) {
       orderBook.add(pair);
+      partialOrderBook.add(pair);
       trades.add(pair);
       ticker.add(pair);
       orders.add(pair);

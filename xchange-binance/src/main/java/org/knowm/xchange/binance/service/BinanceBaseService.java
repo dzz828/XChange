@@ -8,6 +8,7 @@ import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.binance.BinanceAuthenticated;
 import org.knowm.xchange.binance.BinanceExchange;
 import org.knowm.xchange.binance.BinanceFuturesAuthenticated;
+import org.knowm.xchange.binance.BinanceOptionAuthenticated;
 import org.knowm.xchange.binance.dto.meta.BinanceSystemStatus;
 import org.knowm.xchange.binance.dto.meta.exchangeinfo.BinanceExchangeInfo;
 import org.knowm.xchange.client.ExchangeRestProxyBuilder;
@@ -25,6 +26,7 @@ public class BinanceBaseService extends BaseResilientExchangeService<BinanceExch
   protected final String apiKey;
   protected final BinanceAuthenticated binance;
   protected final BinanceFuturesAuthenticated binanceFutures;
+  protected final BinanceOptionAuthenticated binanceOption;
   protected final ParamsDigest signatureCreator;
 
   protected BinanceBaseService(
@@ -40,6 +42,9 @@ public class BinanceBaseService extends BaseResilientExchangeService<BinanceExch
     this.binanceFutures = ExchangeRestProxyBuilder.forInterface(
                     BinanceFuturesAuthenticated.class, futuresSpec)
             .build();
+    ExchangeSpecification optionSpec = exchange.getDefaultExchangeSpecification();
+    optionSpec.setSslUri(BinanceExchange.OPTION_URL);
+    this.binanceOption = ExchangeRestProxyBuilder.forInterface(BinanceOptionAuthenticated.class, optionSpec).build();;
     this.apiKey = exchange.getExchangeSpecification().getApiKey();
     this.signatureCreator =
         BinanceHmacDigest.createInstance(exchange.getExchangeSpecification().getSecretKey());

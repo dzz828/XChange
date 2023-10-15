@@ -8,10 +8,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
 import java.util.Objects;
+import lombok.Getter;
+import lombok.ToString;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.instrument.Instrument;
 import org.knowm.xchange.utils.Assert;
-import org.knowm.xchange.utils.DateUtils;
 
 /**
  * A class encapsulating the information a "Ticker" can contain. Some fields can be empty if not
@@ -20,6 +21,8 @@ import org.knowm.xchange.utils.DateUtils;
  * <p>A ticker contains data representing the latest trade.
  */
 @JsonDeserialize(builder = Ticker.Builder.class)
+@ToString
+@Getter
 public final class Ticker implements Serializable {
 
   private static final long serialVersionUID = -3247730106987193154L;
@@ -40,6 +43,18 @@ public final class Ticker implements Serializable {
   private final BigDecimal bidSize;
   private final BigDecimal askSize;
   private final BigDecimal percentageChange;
+  private final BigDecimal buyVol;
+  private final BigDecimal sellVol;
+  private final BigDecimal delta;
+  private final BigDecimal theta;
+  private final BigDecimal gamma;
+  private final BigDecimal vega;
+  private final BigDecimal deltaBS;
+  private final BigDecimal thetaBS;
+  private final BigDecimal gammaBS;
+  private final BigDecimal vegaBS;
+  private final BigDecimal iv;
+  private final BigDecimal markVol;
 
   /**
    * Constructor
@@ -75,7 +90,19 @@ public final class Ticker implements Serializable {
       Date timestamp,
       BigDecimal bidSize,
       BigDecimal askSize,
-      BigDecimal percentageChange) {
+      BigDecimal percentageChange,
+      BigDecimal buyVol,
+      BigDecimal sellVol,
+      BigDecimal delta,
+      BigDecimal theta,
+      BigDecimal gamma,
+      BigDecimal vega,
+      BigDecimal deltaBS,
+      BigDecimal thetaBS,
+      BigDecimal gammaBS,
+      BigDecimal vegaBS,
+      BigDecimal iv,
+      BigDecimal markVol) {
     this.open = open;
     this.instrument = instrument;
     this.last = last;
@@ -90,11 +117,20 @@ public final class Ticker implements Serializable {
     this.bidSize = bidSize;
     this.askSize = askSize;
     this.percentageChange = percentageChange;
+    this.buyVol = buyVol;
+    this.sellVol = sellVol;
+    this.delta = delta;
+    this.theta = theta;
+    this.gamma = gamma;
+    this.vega = vega;
+    this.deltaBS = deltaBS;
+    this.thetaBS = thetaBS;
+    this.gammaBS = gammaBS;
+    this.vegaBS = vegaBS;
+    this.iv = iv;
+    this.markVol = markVol;
   }
 
-  public Instrument getInstrument() {
-    return instrument;
-  }
 
   /**
    * @deprecated CurrencyPair is a subtype of Instrument - this method will throw an exception if
@@ -114,40 +150,6 @@ public final class Ticker implements Serializable {
     return (CurrencyPair) instrument;
   }
 
-  public BigDecimal getOpen() {
-
-    return open;
-  }
-
-  public BigDecimal getLast() {
-
-    return last;
-  }
-
-  public BigDecimal getBid() {
-
-    return bid;
-  }
-
-  public BigDecimal getAsk() {
-
-    return ask;
-  }
-
-  public BigDecimal getHigh() {
-
-    return high;
-  }
-
-  public BigDecimal getLow() {
-
-    return low;
-  }
-
-  public BigDecimal getVwap() {
-
-    return vwap;
-  }
 
   public BigDecimal getVolume() {
     if (volume == null && quoteVolume != null && last != null && !last.equals(BigDecimal.ZERO)) {
@@ -164,56 +166,7 @@ public final class Ticker implements Serializable {
     return quoteVolume;
   }
 
-  public Date getTimestamp() {
 
-    return timestamp;
-  }
-
-  public BigDecimal getBidSize() {
-    return bidSize;
-  }
-
-  public BigDecimal getAskSize() {
-    return askSize;
-  }
-
-  public BigDecimal getPercentageChange() {
-    return percentageChange;
-  }
-
-  @Override
-  public String toString() {
-
-    return "Ticker [instrument="
-        + instrument
-        + ", open="
-        + open
-        + ", last="
-        + last
-        + ", bid="
-        + bid
-        + ", ask="
-        + ask
-        + ", high="
-        + high
-        + ", low="
-        + low
-        + ",avg="
-        + vwap
-        + ", volume="
-        + volume
-        + ", quoteVolume="
-        + quoteVolume
-        + ", timestamp="
-        + DateUtils.toMillisNullSafe(timestamp)
-        + ", bidSize="
-        + bidSize
-        + ", askSize="
-        + askSize
-        + ", percentageChange="
-        + percentageChange
-        + "]";
-  }
 
   /**
    * Builder to provide the following to {@link Ticker}:
@@ -239,6 +192,19 @@ public final class Ticker implements Serializable {
     private BigDecimal bidSize;
     private BigDecimal askSize;
     private BigDecimal percentageChange;
+    private BigDecimal buyVol;
+    private BigDecimal sellVol;
+    private BigDecimal delta;
+    private BigDecimal theta;
+    private BigDecimal gamma;
+    private BigDecimal vega;
+    private BigDecimal deltaBS;
+    private BigDecimal thetaBS;
+    private BigDecimal gammaBS;
+    private BigDecimal vegaBS;
+    private BigDecimal iv;
+    private BigDecimal markVol;
+
 
     // Prevent repeat builds
     private boolean isBuilt = false;
@@ -262,7 +228,19 @@ public final class Ticker implements Serializable {
               timestamp,
               bidSize,
               askSize,
-              percentageChange);
+              percentageChange,
+              buyVol,
+              sellVol,
+              delta,
+              theta,
+              gamma,
+              vega,
+              deltaBS,
+              thetaBS,
+              gammaBS,
+              vegaBS,
+              iv,
+              markVol);
 
       isBuilt = true;
 
@@ -362,6 +340,66 @@ public final class Ticker implements Serializable {
       this.percentageChange = percentageChange;
       return this;
     }
+
+    public Builder buyVol(BigDecimal buyVol) {
+      this.buyVol = buyVol;
+      return this;
+    }
+
+    public Builder sellVol(BigDecimal sellVol) {
+      this.sellVol = sellVol;
+      return this;
+    }
+
+    public Builder delta(BigDecimal delta) {
+      this.delta = delta;
+      return this;
+    }
+
+    public Builder theta(BigDecimal theta) {
+      this.theta = theta;
+      return this;
+    }
+
+    public Builder gamma(BigDecimal gamma) {
+      this.gamma = gamma;
+      return this;
+    }
+
+    public Builder vega(BigDecimal vega) {
+      this.vega = vega;
+      return this;
+    }
+
+    public Builder deltaBS(BigDecimal deltaBS) {
+      this.deltaBS = deltaBS;
+      return this;
+    }
+
+    public Builder thetaBS(BigDecimal thetaBS) {
+      this.thetaBS = thetaBS;
+      return this;
+    }
+
+    public Builder gammaBS(BigDecimal gammaBS) {
+      this.gammaBS = gammaBS;
+      return this;
+    }
+
+    public Builder vegaBS(BigDecimal vegaBS) {
+      this.vegaBS = vegaBS;
+      return this;
+    }
+
+    public Builder iv(BigDecimal iv) {
+      this.iv = iv;
+      return this;
+    }
+
+    public Builder markVol(BigDecimal markVol) {
+      this.markVol = markVol;
+      return this;
+    }
   }
 
   @Override
@@ -382,7 +420,19 @@ public final class Ticker implements Serializable {
         && Objects.equals(getTimestamp(), ticker.getTimestamp())
         && Objects.equals(getBidSize(), ticker.getBidSize())
         && Objects.equals(getAskSize(), ticker.getAskSize())
-        && Objects.equals(getPercentageChange(), ticker.getPercentageChange());
+        && Objects.equals(getBuyVol(), ticker.getBuyVol())
+        && Objects.equals(getSellVol(), ticker.getSellVol())
+        && Objects.equals(getDelta(), ticker.getDelta())
+        && Objects.equals(getTheta(), ticker.getTheta())
+        && Objects.equals(getGamma(), ticker.getGamma())
+        && Objects.equals(getVega(), ticker.getVega())
+        && Objects.equals(getDeltaBS(), ticker.getDeltaBS())
+        && Objects.equals(getThetaBS(), ticker.getThetaBS())
+        && Objects.equals(getGammaBS(), ticker.getGammaBS())
+        && Objects.equals(getVegaBS(), ticker.getVegaBS())
+        && Objects.equals(getIv(), ticker.getIv())
+        && Objects.equals(getMarkVol(), ticker.getMarkVol())
+        ;
   }
 
   @Override
@@ -400,6 +450,17 @@ public final class Ticker implements Serializable {
         getQuoteVolume(),
         getTimestamp(),
         getBidSize(),
-        getAskSize());
+        getAskSize(),
+        getBuyVol(),
+        getSellVol(),
+        getDelta(),
+        getTheta(),
+        getGamma(),
+        getVega(),
+        getDeltaBS(),
+        getThetaBS(),
+        getGammaBS(),
+        getVegaBS(),
+        getIv());
   }
 }

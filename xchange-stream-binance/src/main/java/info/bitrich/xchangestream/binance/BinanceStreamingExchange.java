@@ -8,11 +8,14 @@ import info.bitrich.xchangestream.util.Events;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.knowm.xchange.binance.BinanceAdapters;
 import org.knowm.xchange.binance.BinanceAuthenticated;
 import org.knowm.xchange.binance.BinanceExchange;
 import org.knowm.xchange.binance.service.BinanceMarketDataService;
 import org.knowm.xchange.client.ExchangeRestProxyBuilder;
 import org.knowm.xchange.derivative.FuturesContract;
+import org.knowm.xchange.derivative.OptionsContract;
 import org.knowm.xchange.instrument.Instrument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -282,25 +285,32 @@ public class BinanceStreamingExchange extends BinanceExchange implements Streami
   private String buildSubscriptionStrings(List<Instrument> currencyPairs, String subscriptionType) {
     if (BinanceSubscriptionType.DEPTH.getType().equals(subscriptionType)) {
       return subscriptionStrings(currencyPairs)
-          .map(s -> s + "@" + subscriptionType + orderBookUpdateFrequencyParameter)
+          .map(p -> {
+            if (p.getLeft() instanceof OptionsContract) {
+              return p.getRight() + "@" + BinanceSubscriptionType.DEPTH20.getType() + orderBookUpdateFrequencyParameter;
+            }
+            return p.getRight() + "@" + subscriptionType + orderBookUpdateFrequencyParameter;
+          })
           .collect(Collectors.joining("/"));
     } else {
       return subscriptionStrings(currencyPairs)
-          .map(s -> s + "@" + subscriptionType)
+          .map(p -> p.getRight() + "@" + subscriptionType)
           .collect(Collectors.joining("/"));
     }
   }
 
-  private static Stream<String> subscriptionStrings(List<Instrument> currencyPairs) {
-    return currencyPairs.stream().map(BinanceStreamingExchange::getPrefix);
+  private static Stream<Pair<Instrument, String>> subscriptionStrings(List<Instrument> currencyPairs) {
+    return currencyPairs.stream().map(i -> Pair.of(i, BinanceStreamingExchange.getPrefix(i)));
   }
 
-  private static String getPrefix(Instrument pair) {
+  public static String getPrefix(Instrument pair) {
     String prefix = String.join("", pair.toString().split("/")).toLowerCase();
     if (pair instanceof FuturesContract) {
       prefix =
           String.join("", ((FuturesContract) pair).getCurrencyPair().toString().split("/"))
               .toLowerCase();
+    } else if (pair instanceof OptionsContract) {
+      prefix = BinanceAdapters.toSymbol(pair);
     }
 
     return prefix;

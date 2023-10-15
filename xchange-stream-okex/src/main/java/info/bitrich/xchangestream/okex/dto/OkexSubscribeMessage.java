@@ -21,5 +21,7 @@ public class OkexSubscribeMessage {
         private final String uly;
 
         private final String instId;
+
+        private final String instFamily;
     }
 }

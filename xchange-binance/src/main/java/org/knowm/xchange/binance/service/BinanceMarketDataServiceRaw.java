@@ -12,6 +12,7 @@ import org.knowm.xchange.binance.dto.meta.BinanceTime;
 import org.knowm.xchange.client.ResilienceRegistries;
 import org.knowm.xchange.currency.CurrencyPair;
 import org.knowm.xchange.derivative.FuturesContract;
+import org.knowm.xchange.derivative.OptionsContract;
 import org.knowm.xchange.instrument.Instrument;
 import org.knowm.xchange.utils.StreamUtils;
 
@@ -36,10 +37,14 @@ public class BinanceMarketDataServiceRaw extends BinanceBaseService {
   }
 
   public BinanceOrderbook getBinanceOrderbookAllProducts(Instrument pair, Integer limit) throws IOException {
-    return decorateApiCall(() ->
-            (pair instanceof FuturesContract)
-            ? binanceFutures.depth(BinanceAdapters.toSymbol(pair), limit)
-            : binance.depth(BinanceAdapters.toSymbol(pair), limit))
+    return decorateApiCall(() -> {
+      if (pair instanceof FuturesContract) {
+        return binanceFutures.depth(BinanceAdapters.toSymbol(pair), limit);
+      } else if (pair instanceof OptionsContract) {
+        return binanceOption.depth(BinanceAdapters.toSymbol(pair), limit);
+      }
+      return binance.depth(BinanceAdapters.toSymbol(pair), limit);
+    })
         .withRetry(retry("depth"))
         .withRateLimiter(rateLimiter(REQUEST_WEIGHT_RATE_LIMITER), depthPermits(limit))
         .call();

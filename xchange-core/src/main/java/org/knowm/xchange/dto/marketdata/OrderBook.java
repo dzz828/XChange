@@ -20,9 +20,9 @@ public final class OrderBook implements Serializable {
   private static final long serialVersionUID = -7788306758114464314L;
 
   /** the asks */
-  private final List<LimitOrder> asks;
+  private List<LimitOrder> asks;
   /** the bids */
-  private final List<LimitOrder> bids;
+  private List<LimitOrder> bids;
   /** the timestamp of the orderbook according to the exchange's server, null if not provided */
   private Date timeStamp;
 
@@ -61,8 +61,8 @@ public final class OrderBook implements Serializable {
       Collections.sort(this.asks);
       Collections.sort(this.bids);
     } else {
-      this.asks = asks;
-      this.bids = bids;
+      this.asks = new ArrayList<>(asks);
+      this.bids = new ArrayList<>(bids);
     }
   }
 
@@ -145,18 +145,26 @@ public final class OrderBook implements Serializable {
   }
 
   // Replace the amount for limitOrder's price in the provided list.
-  private void update(List<LimitOrder> asks, LimitOrder limitOrder) {
+  private void update(List<LimitOrder> limitOrders, LimitOrder limitOrder) {
+    List<LimitOrder> copy = new ArrayList<>(limitOrders);
 
-    int idx = Collections.binarySearch(asks, limitOrder);
+    int idx = Collections.binarySearch(copy, limitOrder);
     if (idx >= 0) {
-      asks.remove(idx);
+      copy.remove(idx);
     } else {
       idx = -idx - 1;
     }
 
     if (limitOrder.getRemainingAmount().compareTo(BigDecimal.ZERO) != 0) {
-      asks.add(idx, limitOrder);
+      copy.add(idx, limitOrder);
     }
+
+    if (OrderType.ASK.equals(limitOrder.getType())) {
+      this.asks = copy;
+    } else if (OrderType.BID.equals(limitOrder.getType())){
+      this.bids = copy;
+    }
+
   }
 
   /**
@@ -169,7 +177,7 @@ public final class OrderBook implements Serializable {
   public void update(OrderBookUpdate orderBookUpdate) {
 
     LimitOrder limitOrder = orderBookUpdate.getLimitOrder();
-    List<LimitOrder> limitOrders = getOrders(limitOrder.getType());
+    List<LimitOrder> limitOrders = new ArrayList<>(getOrders(limitOrder.getType()));
     int idx = Collections.binarySearch(limitOrders, limitOrder);
     if (idx >= 0) {
       limitOrders.remove(idx);
@@ -180,6 +188,12 @@ public final class OrderBook implements Serializable {
     if (orderBookUpdate.getTotalVolume().compareTo(BigDecimal.ZERO) != 0) {
       LimitOrder updatedOrder = withAmount(limitOrder, orderBookUpdate.getTotalVolume());
       limitOrders.add(idx, updatedOrder);
+    }
+
+    if (OrderType.ASK.equals(limitOrder.getType())) {
+      this.asks = limitOrders;
+    } else if (OrderType.BID.equals(limitOrder.getType())){
+      this.bids = limitOrders;
     }
 
     updateDate(limitOrder.getTimestamp());

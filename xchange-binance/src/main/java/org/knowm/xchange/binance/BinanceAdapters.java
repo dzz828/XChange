@@ -73,7 +73,11 @@ public class BinanceAdapters {
     } else if(pair instanceof FuturesContract){
       symbol = ((FuturesContract) pair).getCurrencyPair().toString().replace("/","");
     } else if(pair instanceof OptionsContract) {
-      symbol = ((OptionsContract) pair).getCurrencyPair().toString().replace("/","");
+      String[] splits = pair.toString().split("/");
+      if (splits.length != 5) {
+        throw new IllegalArgumentException("Unable to convert to binance option symbol: " + pair);
+      }
+      symbol = String.format("%s-%s-%s-%s", splits[0], splits[2], splits[3], splits[4]);
     } else {
       symbol = ((CurrencyPair)pair).base.getCurrencyCode() + ((CurrencyPair)pair).counter.getCurrencyCode();
     }

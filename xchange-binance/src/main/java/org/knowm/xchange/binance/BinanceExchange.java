@@ -21,6 +21,7 @@ public class BinanceExchange extends BaseExchange implements Exchange {
   private static final String SPOT_URL = "https://api.binance.com";
   public static final String FUTURES_URL = "https://fapi.binance.com";
   public static final String SANDBOX_FUTURES_URL = "https://testnet.binancefuture.com";
+  public static final String OPTION_URL = "https://eapi.binance.com";
   protected static ResilienceRegistries RESILIENCE_REGISTRIES;
   protected SynchronizedValueFactory<Long> timestampFactory;
 

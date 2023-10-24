@@ -31,7 +31,7 @@ public class BinanceFundingRate {
             @JsonProperty("nextFundingTime") Date nextFundingTime,
             @JsonProperty("interestRate") BigDecimal interestRate,
             @JsonProperty("time") Date time) {
-        this.instrument = BinanceAdapters.adaptSymbol(symbol,true);
+        this.instrument = BinanceAdapters.adaptSymbol(symbol,BinanceAdapters.SPOT);
         this.markPrice = markPrice;
         this.indexPrice = indexPrice;
         this.estimatedSettlePrice = estimatedSettlePrice;

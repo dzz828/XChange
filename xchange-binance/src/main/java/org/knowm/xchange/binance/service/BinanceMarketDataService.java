@@ -10,14 +10,18 @@ import java.util.stream.Collectors;
 import org.knowm.xchange.binance.*;
 import org.knowm.xchange.binance.dto.BinanceException;
 import org.knowm.xchange.binance.dto.marketdata.BinanceOrderbook;
+import org.knowm.xchange.binance.dto.marketdata.option.BinanceOptionTicker24h;
 import org.knowm.xchange.client.ResilienceRegistries;
 import org.knowm.xchange.derivative.FuturesContract;
+import org.knowm.xchange.derivative.OptionsContract;
 import org.knowm.xchange.dto.Order.OrderType;
 import org.knowm.xchange.dto.marketdata.*;
 import org.knowm.xchange.dto.trade.LimitOrder;
 import org.knowm.xchange.exceptions.ExchangeException;
 import org.knowm.xchange.instrument.Instrument;
 import org.knowm.xchange.service.marketdata.MarketDataService;
+import org.knowm.xchange.service.marketdata.params.AllProductTickerParams;
+import org.knowm.xchange.service.marketdata.params.Params;
 
 public class BinanceMarketDataService extends BinanceMarketDataServiceRaw
     implements MarketDataService {
@@ -54,6 +58,23 @@ public class BinanceMarketDataService extends BinanceMarketDataServiceRaw
   }
 
   @Override
+  public List<Ticker> getTickers(Params params) throws IOException {
+    if (params instanceof AllProductTickerParams) {
+      if (BinanceAdapters.OPTION.equals(((AllProductTickerParams) params).getInstType())) {
+        return optionTicker24hAllProducts()
+            .stream()
+            .map(BinanceOptionTicker24h::toTicker)
+            .filter(t -> t.getInstrument() instanceof OptionsContract
+                && ((OptionsContract) t.getInstrument()).getCurrencyPair()
+                .equals(BinanceAdapters.adaptSymbol(((AllProductTickerParams) params).getUnderlying(), BinanceAdapters.SPOT)))
+            .collect(Collectors.toList());
+      }
+      throw new UnsupportedOperationException("Unsupported instrument " + ((AllProductTickerParams) params).getInstType());
+    }
+    throw new IllegalArgumentException("Unsupported params " + params);
+  }
+
+  @Override
   public OrderBook getOrderBook(Instrument instrument, Object... args) throws IOException {
     return getBinanceOrderBook(instrument,args);
   }
@@ -66,6 +87,11 @@ public class BinanceMarketDataService extends BinanceMarketDataServiceRaw
   @Override
   public FundingRate getFundingRate(Instrument instrument) throws IOException {
     return BinanceAdapters.adaptFundingRate(getBinanceFundingRate(instrument));
+  }
+
+  @Override
+  public IndexPrice getIndexPrice(Instrument instrument) throws IOException {
+    return BinanceAdapters.adaptIndexPrice(getBinanceFundingRate(instrument));
   }
 
   private Trades getBinanceTrades(Instrument instrument, Object... args) throws IOException{

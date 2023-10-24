@@ -1,5 +1,8 @@
 package org.knowm.xchange.binance.dto.marketdata;
 
+import static org.knowm.xchange.binance.BinanceAdapters.FUTURE;
+import static org.knowm.xchange.binance.BinanceAdapters.SPOT;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -106,7 +109,7 @@ public final class BinanceTicker24h {
   public synchronized Ticker toTicker(boolean isFuture) {
     Instrument instrument = pair;
     if (instrument == null) {
-      instrument = BinanceAdapters.adaptSymbol(symbol, isFuture );
+      instrument = BinanceAdapters.adaptSymbol(symbol, isFuture ? FUTURE: SPOT );
     }
     if (ticker == null) {
       ticker =

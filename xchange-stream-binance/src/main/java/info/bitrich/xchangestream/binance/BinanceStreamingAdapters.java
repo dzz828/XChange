@@ -42,7 +42,7 @@ public class BinanceStreamingAdapters {
     public static OrderBook adaptFuturesOrderbook(DepthBinanceWebSocketTransaction binanceOrderBook) {
         List<LimitOrder> bids = new ArrayList<>();
         List<LimitOrder> asks = new ArrayList<>();
-        Instrument instrument = BinanceAdapters.adaptSymbol(binanceOrderBook.getSymbol(), true);
+        Instrument instrument = BinanceAdapters.adaptSymbol(binanceOrderBook.getSymbol(), BinanceAdapters.FUTURE);
 
         binanceOrderBook.getOrderBook().asks.forEach((key, value) -> asks.add(new LimitOrder.Builder(Order.OrderType.ASK, instrument)
                 .limitPrice(key)

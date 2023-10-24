@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import org.knowm.xchange.binance.BinanceAdapters;
 import org.knowm.xchange.binance.BinanceExchange;
 import org.knowm.xchange.binance.dto.marketdata.*;
+import org.knowm.xchange.binance.dto.marketdata.option.BinanceOptionTicker24h;
 import org.knowm.xchange.binance.dto.meta.BinanceTime;
 import org.knowm.xchange.client.ResilienceRegistries;
 import org.knowm.xchange.currency.CurrencyPair;
@@ -94,6 +95,13 @@ public class BinanceMarketDataServiceRaw extends BinanceBaseService {
         .withRetry(retry("ticker24h"))
         .withRateLimiter(rateLimiter(REQUEST_WEIGHT_RATE_LIMITER), 40)
         .call();
+  }
+
+  public List<BinanceOptionTicker24h> optionTicker24hAllProducts() throws IOException {
+      return decorateApiCall(() -> binanceOption.ticker24h(null))
+          .withRetry(retry("optionTicker24h"))
+          .withRateLimiter(rateLimiter(REQUEST_WEIGHT_RATE_LIMITER), 40)
+          .call();
   }
 
   public BinanceTicker24h ticker24hAllProducts(Instrument pair) throws IOException {

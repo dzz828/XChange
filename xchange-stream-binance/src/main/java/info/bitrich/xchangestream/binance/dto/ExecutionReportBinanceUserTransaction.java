@@ -1,5 +1,8 @@
 package info.bitrich.xchangestream.binance.dto;
 
+import static org.knowm.xchange.binance.BinanceAdapters.FUTURE;
+import static org.knowm.xchange.binance.BinanceAdapters.SPOT;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 
@@ -105,7 +108,7 @@ public class ExecutionReportBinanceUserTransaction extends ProductBinanceWebSock
     return new UserTrade.Builder()
         .type(BinanceAdapters.convert(side))
         .originalAmount(lastExecutedQuantity)
-        .instrument(BinanceAdapters.adaptSymbol(symbol, isFuture))
+        .instrument(BinanceAdapters.adaptSymbol(symbol, isFuture ? FUTURE: SPOT))
         .price(lastExecutedPrice)
         .timestamp(getEventTime())
         .id(Long.toString(tradeId))

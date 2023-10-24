@@ -229,4 +229,8 @@ public interface MarketDataService extends BaseService {
   default FundingRate getFundingRate(Instrument instrument) throws IOException {
     throw new NotYetImplementedForExchangeException("getFundingRate");
   }
+
+  default IndexPrice getIndexPrice(Instrument instrument) throws IOException {
+    throw new NotYetImplementedForExchangeException("getFundingRate");
+  }
 }

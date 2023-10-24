@@ -20,6 +20,7 @@ public class ProductSubscription {
   private final List<Instrument> userTrades;
   private final List<Instrument> orders;
   private final List<Instrument> fundingRates;
+  private final List<Instrument> indexPrices;
   private final List<Currency> balances;
 
   private ProductSubscription(ProductSubscriptionBuilder builder) {
@@ -30,6 +31,7 @@ public class ProductSubscription {
     this.orders = asList(builder.orders);
     this.fundingRates = asList(builder.fundingRates);
     this.userTrades = asList(builder.userTrades);
+    this.indexPrices = asList(builder.indexPrices);
     this.balances = asList(builder.balances);
   }
 
@@ -61,6 +63,10 @@ public class ProductSubscription {
 
   public List<Instrument> getFundingRates() {
     return fundingRates;
+  }
+
+  public List<Instrument> getIndexPrices() {
+    return indexPrices;
   }
 
   public List<Instrument> getUserTrades() {
@@ -95,6 +101,7 @@ public class ProductSubscription {
     private final Set<Instrument> userTrades;
     private final Set<Instrument> orders;
     private final Set<Instrument> fundingRates;
+    private final Set<Instrument> indexPrices;
     private final Set<Currency> balances;
 
     private ProductSubscriptionBuilder() {
@@ -104,6 +111,7 @@ public class ProductSubscription {
       ticker = new HashSet<>();
       orders = new HashSet<>();
       fundingRates = new HashSet<>();
+      indexPrices = new HashSet<>();
       userTrades = new HashSet<>();
       balances = new HashSet<>();
     }
@@ -142,6 +150,12 @@ public class ProductSubscription {
       return this;
     }
 
+    public ProductSubscriptionBuilder addIndexPrices(Instrument pair) {
+      indexPrices.add(pair);
+      return this;
+    }
+
+
     public ProductSubscriptionBuilder addBalances(Currency pair) {
       balances.add(pair);
       return this;
@@ -157,6 +171,7 @@ public class ProductSubscription {
       userTrades.add(pair);
       balances.add(pair.getBase());
       balances.add(pair.getCounter());
+      indexPrices.add(pair);
       return this;
     }
 

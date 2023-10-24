@@ -1,5 +1,8 @@
 package org.knowm.xchange.binance.dto.marketdata;
 
+import static org.knowm.xchange.binance.BinanceAdapters.FUTURE;
+import static org.knowm.xchange.binance.BinanceAdapters.SPOT;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.math.BigDecimal;
 
@@ -40,7 +43,7 @@ public final class BinanceBookTicker {
     if (ticker == null) {
       ticker =
           new Ticker.Builder()
-              .instrument(BinanceAdapters.adaptSymbol(symbol, isFuture))
+              .instrument(BinanceAdapters.adaptSymbol(symbol, isFuture ? FUTURE: SPOT))
               .ask(askPrice)
               .bid(bidPrice)
               .askSize(askQty)

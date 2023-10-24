@@ -46,6 +46,9 @@ import org.knowm.xchange.dto.trade.*;
 import org.knowm.xchange.instrument.Instrument;
 
 public class BinanceAdapters {
+  public static final String OPTION = "OPTION";
+  public static final String FUTURE = "FUTURE";
+  public static final String SPOT = "SPOT";
   private static final DateTimeFormatter DATE_TIME_FMT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -157,7 +160,16 @@ public class BinanceAdapters {
     return isBuyer ? OrderType.BID : OrderType.ASK;
   }
 
-  public static Instrument adaptSymbol(String symbol, boolean isFuture) {
+  public static Instrument adaptSymbol(String symbol, String instType) {
+    if (OPTION.equals(instType)) {
+      String[] splits = symbol.split("-");
+      if (splits.length != 4) {
+        throw new IllegalArgumentException("Illegal option symbol " + symbol);
+      }
+      return new OptionsContract(String.format("%s/%s/%s/%s/%s", splits[0],
+          Currency.USDT.getSymbol(), splits[1], splits[2], splits[3]));
+    }
+
     int pairLength = symbol.length();
     CurrencyPair currencyPair;
     if (symbol.endsWith("USDT")) {
@@ -175,7 +187,13 @@ public class BinanceAdapters {
           symbol.substring(0, pairLength - 3), symbol.substring(pairLength - 3));
     }
 
-    return (isFuture) ? new FuturesContract(currencyPair,"PERP") : currencyPair;
+    if (SPOT.equals(instType)) {
+      return currencyPair;
+    } else if (FUTURE.equals(instType)) {
+      return new FuturesContract(currencyPair,"PERP");
+    }
+
+    throw new IllegalArgumentException("Unsupported instrument type" + instType);
   }
 
   public static OpenOrders adaptOpenOrders(List<BinanceOrder> binanceOrders, boolean isFuture){
@@ -196,7 +214,7 @@ public class BinanceAdapters {
 
   public static Order adaptOrder(BinanceOrder order, boolean isFuture) {
     OrderType type = convert(order.side);
-    Instrument instrument = adaptSymbol(order.symbol, isFuture);
+    Instrument instrument = adaptSymbol(order.symbol, isFuture ? FUTURE: SPOT);
     Order.Builder builder;
     if (order.type.equals(org.knowm.xchange.binance.dto.trade.OrderType.MARKET)) {
       builder = new MarketOrder.Builder(type, instrument);
@@ -224,7 +242,7 @@ public class BinanceAdapters {
 
   private static Ticker adaptPriceQuantity(BinancePriceQuantity priceQuantity, boolean isFuture) {
     return new Ticker.Builder()
-        .instrument(adaptSymbol(priceQuantity.symbol, isFuture))
+        .instrument(adaptSymbol(priceQuantity.symbol, isFuture ? FUTURE: SPOT))
         .ask(priceQuantity.askPrice)
         .askSize(priceQuantity.askQty)
         .bid(priceQuantity.bidPrice)
@@ -342,7 +360,7 @@ public class BinanceAdapters {
                 .type((position.getPositionAmt().compareTo(BigDecimal.ZERO) > 0) ? OpenPosition.Type.LONG : OpenPosition.Type.SHORT)
                 .unRealisedPnl(position.getUnrealizedProfit())
                 .price(position.getEntryPrice())
-                .instrument(adaptSymbol(position.getSymbol(), true))
+                .instrument(adaptSymbol(position.getSymbol(), FUTURE))
                 .build());
       }
     }
@@ -358,7 +376,7 @@ public class BinanceAdapters {
                                     new UserTrade.Builder()
                                             .type(BinanceAdapters.convertType(t.isBuyer))
                                             .originalAmount(t.qty)
-                                            .instrument(adaptSymbol(t.symbol, isFuture))
+                                            .instrument(adaptSymbol(t.symbol, isFuture ? FUTURE: SPOT))
                                             .price(t.price)
                                             .timestamp(t.getTime())
                                             .id(Long.toString(t.id))
@@ -561,5 +579,13 @@ public class BinanceAdapters {
             .fundingRateDate(binanceFundingRate.getNextFundingTime())
             .fundingRateEffectiveInMinutes(TimeUnit.MILLISECONDS.toMinutes(binanceFundingRate.getNextFundingTime().getTime()-binanceFundingRate.getTime().getTime()))
             .build();
+  }
+
+  public static IndexPrice adaptIndexPrice(BinanceFundingRate binanceFundingRate) {
+    return IndexPrice.builder()
+        .time(Optional.of(binanceFundingRate).map(BinanceFundingRate::getTime).map(Date::getTime).orElse(null))
+        .indexPrice(binanceFundingRate.getIndexPrice())
+        .underlyingSymbol(BinanceAdapters.toSymbol(binanceFundingRate.getInstrument()))
+        .build();
   }
 }

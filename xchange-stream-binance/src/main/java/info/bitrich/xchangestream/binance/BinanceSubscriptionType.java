@@ -4,6 +4,7 @@ public enum BinanceSubscriptionType {
   DEPTH("depth"),
   DEPTH20("depth20"),
   FUNDING_RATES("markPrice"),
+  INDEX_PRICE("index"),
   TRADE("trade"),
   TICKER("ticker"),
   BOOK_TICKER("bookTicker"),

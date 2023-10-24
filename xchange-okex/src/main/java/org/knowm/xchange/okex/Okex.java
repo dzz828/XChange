@@ -50,12 +50,30 @@ public interface Okex {
       throws IOException, OkexException;
 
   @GET
+  @Path("/market/index-tickers")
+  @Consumes(MediaType.APPLICATION_JSON)
+  OkexResponse<List<OkexIndexTicker>> getIndexTicker(
+      @QueryParam("instId") String instrument,
+      @HeaderParam("X-SIMULATED-TRADING") String simulatedTrading)
+      throws IOException, OkexException;
+
+  @GET
   @Path("/market/ticker")
   @Consumes(MediaType.APPLICATION_JSON)
   OkexResponse<List<OkexTicker>> getTicker(
           @QueryParam("instId") String instrument,
           @HeaderParam("X-SIMULATED-TRADING") String simulatedTrading)
           throws IOException, OkexException;
+
+  @GET
+  @Path("/market/tickers")
+  @Consumes(MediaType.APPLICATION_JSON)
+  OkexResponse<List<OkexTicker>> getTickers(
+      @QueryParam("instType") String instType,
+      @QueryParam("uly") String uly,
+      @QueryParam("instFamily") String instFamily,
+      @HeaderParam("X-SIMULATED-TRADING") String simulatedTrading)
+      throws IOException, OkexException;
 
   @GET
   @Path("/market/books")

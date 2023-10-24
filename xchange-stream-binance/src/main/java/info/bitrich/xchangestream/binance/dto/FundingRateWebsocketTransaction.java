@@ -42,7 +42,7 @@ public class FundingRateWebsocketTransaction extends ProductBinanceWebSocketTran
                 .fundingRate8h(fundingRate)
                 .fundingRate1h(fundingRate.divide(BigDecimal.valueOf(8), fundingRate.scale(), RoundingMode.HALF_EVEN))
                 .fundingRateDate(nextFundingTime)
-                .instrument(BinanceAdapters.adaptSymbol(symbol,true))
+                .instrument(BinanceAdapters.adaptSymbol(symbol,BinanceAdapters.FUTURE))
                 .build();
     }
 }

@@ -1,5 +1,7 @@
 package info.bitrich.xchangestream.binance.dto;
 
+import static org.knowm.xchange.binance.BinanceAdapters.FUTURE;
+import static org.knowm.xchange.binance.BinanceAdapters.SPOT;
 import static org.knowm.xchange.utils.StreamUtils.singletonCollector;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -48,6 +50,6 @@ public class KlineBinanceWebSocketTransaction extends BaseBinanceWebSocketTransa
     }
 
     public BinanceKline toBinanceKline(boolean isFuture) {
-        return new BinanceKline(BinanceAdapters.adaptSymbol(symbol, isFuture), klineInterval, getParameters(kline));
+        return new BinanceKline(BinanceAdapters.adaptSymbol(symbol, isFuture ? FUTURE: SPOT), klineInterval, getParameters(kline));
     }
 }

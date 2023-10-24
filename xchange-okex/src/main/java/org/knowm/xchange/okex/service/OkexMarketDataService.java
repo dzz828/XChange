@@ -1,22 +1,31 @@
 package org.knowm.xchange.okex.service;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import org.knowm.xchange.client.ResilienceRegistries;
 import org.knowm.xchange.currency.CurrencyPair;
-import org.knowm.xchange.dto.marketdata.*;
+import org.knowm.xchange.dto.marketdata.CandleStickData;
+import org.knowm.xchange.dto.marketdata.FundingRate;
+import org.knowm.xchange.dto.marketdata.IndexPrice;
+import org.knowm.xchange.dto.marketdata.OrderBook;
+import org.knowm.xchange.dto.marketdata.Ticker;
+import org.knowm.xchange.dto.marketdata.Trades;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.instrument.Instrument;
 import org.knowm.xchange.okex.OkexAdapters;
 import org.knowm.xchange.okex.OkexExchange;
 import org.knowm.xchange.okex.dto.OkexResponse;
 import org.knowm.xchange.okex.dto.marketdata.OkexCandleStick;
+import org.knowm.xchange.okex.dto.marketdata.OkexIndexTicker;
+import org.knowm.xchange.okex.service.params.OkexTickerParams;
 import org.knowm.xchange.service.marketdata.MarketDataService;
+import org.knowm.xchange.service.marketdata.params.AllProductTickerParams;
+import org.knowm.xchange.service.marketdata.params.Params;
 import org.knowm.xchange.service.trade.params.CandleStickDataParams;
 import org.knowm.xchange.service.trade.params.DefaultCandleStickParam;
 import org.knowm.xchange.service.trade.params.DefaultCandleStickParamWithLimit;
-
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 /** Author: Max Gao (gaamox@tutanota.com) Created: 08-06-2021 */
 public class OkexMarketDataService extends OkexMarketDataServiceRaw implements MarketDataService {
@@ -42,6 +51,17 @@ public class OkexMarketDataService extends OkexMarketDataServiceRaw implements M
     return OkexAdapters.adaptTicker(getOkexTicker(OkexAdapters.adaptInstrument(instrument)).getData().get(0));
   }
 
+  @Override
+  public List<Ticker> getTickers(Params params) throws IOException {
+    if (params instanceof AllProductTickerParams) {
+      return getOkexTickers((AllProductTickerParams)params)
+          .getData()
+          .stream()
+          .map(OkexAdapters::adaptTicker)
+          .collect(Collectors.toList());
+    }
+    throw new IllegalArgumentException("Invalid param: " + params);
+  }
 
   @Override
   public CandleStickData getCandleStickData(CurrencyPair currencyPair, CandleStickDataParams params)
@@ -74,5 +94,14 @@ public class OkexMarketDataService extends OkexMarketDataServiceRaw implements M
   @Override
   public FundingRate getFundingRate(Instrument instrument) throws IOException {
     return OkexAdapters.adaptFundingRate(getOkexFundingRate(OkexAdapters.adaptInstrument(instrument)).getData());
+  }
+
+  @Override
+  public IndexPrice getIndexPrice(Instrument instrument) throws IOException {
+    List<OkexIndexTicker> tickers = getOkexIndexTicker(OkexAdapters.adaptInstrument(instrument)).getData();
+    if (tickers.isEmpty()) {
+      return null;
+    }
+    return OkexAdapters.adaptIndexTicker(tickers.get(0));
   }
 }

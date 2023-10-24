@@ -1,5 +1,7 @@
 package info.bitrich.xchangestream.binance;
 
+import static java.util.Collections.emptyMap;
+
 import info.bitrich.xchangestream.binance.BinanceUserDataChannel.NoActiveChannelException;
 import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
@@ -7,8 +9,12 @@ import info.bitrich.xchangestream.service.netty.ConnectionStateModel.State;
 import info.bitrich.xchangestream.util.Events;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
 import org.knowm.xchange.binance.BinanceAdapters;
 import org.knowm.xchange.binance.BinanceAuthenticated;
 import org.knowm.xchange.binance.BinanceExchange;
@@ -19,14 +25,6 @@ import org.knowm.xchange.derivative.OptionsContract;
 import org.knowm.xchange.instrument.Instrument;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import static java.util.Collections.emptyMap;
 
 public class BinanceStreamingExchange extends BinanceExchange implements StreamingExchange {
 
@@ -277,30 +275,36 @@ public class BinanceStreamingExchange extends BinanceExchange implements Streami
             buildSubscriptionStrings(
                 subscription.getTrades(), BinanceSubscriptionType.TRADE.getType()),
             buildSubscriptionStrings(
-                subscription.getFundingRates(), BinanceSubscriptionType.FUNDING_RATES.getType()))
+                subscription.getFundingRates(), BinanceSubscriptionType.FUNDING_RATES.getType()),
+            buildSubscriptionStrings(
+                subscription.getIndexPrices(), BinanceSubscriptionType.INDEX_PRICE.getType()))
         .filter(s -> !s.isEmpty())
         .collect(Collectors.joining("/"));
   }
 
-  private String buildSubscriptionStrings(List<Instrument> currencyPairs, String subscriptionType) {
-    if (BinanceSubscriptionType.DEPTH.getType().equals(subscriptionType)) {
-      return subscriptionStrings(currencyPairs)
-          .map(p -> {
-            if (p.getLeft() instanceof OptionsContract) {
-              return p.getRight() + "@" + BinanceSubscriptionType.DEPTH20.getType() + orderBookUpdateFrequencyParameter;
-            }
-            return p.getRight() + "@" + subscriptionType + orderBookUpdateFrequencyParameter;
-          })
-          .collect(Collectors.joining("/"));
-    } else {
-      return subscriptionStrings(currencyPairs)
-          .map(p -> p.getRight() + "@" + subscriptionType)
-          .collect(Collectors.joining("/"));
-    }
+  private String buildSubscriptionStrings(List<Instrument> instruments, String subscriptionType) {
+    return instruments.stream()
+        .map(instrument -> channelFromCurrency(instrument, subscriptionType, orderBookUpdateFrequencyParameter))
+        .collect(Collectors.joining("/"));
   }
 
-  private static Stream<Pair<Instrument, String>> subscriptionStrings(List<Instrument> currencyPairs) {
-    return currencyPairs.stream().map(i -> Pair.of(i, BinanceStreamingExchange.getPrefix(i)));
+  public static String channelFromCurrency(Instrument instrument, String subscriptionType, String orderBookUpdateFrequencyParameter) {
+    String currency = getPrefix(instrument);
+    String currencyChannel = currency + "@" + subscriptionType;
+
+    if (BinanceSubscriptionType.INDEX_PRICE.getType().equals(subscriptionType)) {
+      if (instrument instanceof OptionsContract) {
+        return getPrefix(((OptionsContract) instrument).getCurrencyPair()).toUpperCase() + "@" + subscriptionType;
+      }
+      throw new UnsupportedOperationException("Index price not supported for " + instrument);
+    } else if (BinanceSubscriptionType.DEPTH.getType().equals(subscriptionType)) {
+      if (instrument instanceof OptionsContract) {
+        return currency + "@" + BinanceSubscriptionType.DEPTH20.getType() + orderBookUpdateFrequencyParameter;
+      }
+      return currencyChannel + orderBookUpdateFrequencyParameter;
+    } else {
+      return currencyChannel;
+    }
   }
 
   public static String getPrefix(Instrument pair) {

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.knowm.xchange.currency.Currency;
@@ -28,6 +29,7 @@ import org.knowm.xchange.dto.account.Wallet;
 import org.knowm.xchange.dto.marketdata.CandleStick;
 import org.knowm.xchange.dto.marketdata.CandleStickData;
 import org.knowm.xchange.dto.marketdata.FundingRate;
+import org.knowm.xchange.dto.marketdata.IndexPrice;
 import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.knowm.xchange.dto.marketdata.Ticker;
 import org.knowm.xchange.dto.marketdata.Ticker.Builder;
@@ -53,6 +55,7 @@ import org.knowm.xchange.okex.dto.account.OkexWalletBalance;
 import org.knowm.xchange.okex.dto.marketdata.OkexCandleStick;
 import org.knowm.xchange.okex.dto.marketdata.OkexCurrency;
 import org.knowm.xchange.okex.dto.marketdata.OkexFundingRate;
+import org.knowm.xchange.okex.dto.marketdata.OkexIndexTicker;
 import org.knowm.xchange.okex.dto.marketdata.OkexInstrument;
 import org.knowm.xchange.okex.dto.marketdata.OkexOptionSummary;
 import org.knowm.xchange.okex.dto.marketdata.OkexOrderbook;
@@ -493,6 +496,15 @@ public class OkexAdapters {
       case "net": return (okexPosition.getPosition().compareTo(BigDecimal.ZERO) >= 0) ? OpenPosition.Type.LONG : OpenPosition.Type.SHORT;
       default: throw new UnsupportedOperationException();
     }
+  }
+
+  public static IndexPrice adaptIndexTicker(OkexIndexTicker okexIndexTicker) {
+    return IndexPrice.builder()
+        .indexPrice(okexIndexTicker.getIndexPrice())
+        .underlyingSymbol(okexIndexTicker.getInstrumentId())
+        .time(Optional.of(okexIndexTicker).map(OkexIndexTicker::getTimestamp)
+            .map(Date::getTime).orElse(null))
+        .build();
   }
 
   public static FundingRate adaptFundingRate(List<OkexFundingRate> okexFundingRate) {

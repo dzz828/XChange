@@ -91,4 +91,8 @@ public interface StreamingMarketDataService {
   default Observable<FundingRates> getFundingRates() {
     throw new NotYetImplementedForExchangeException("getFundingRates");
   }
+
+  default Observable<IndexPrice> getIndexPrice(Instrument instrument, Object... args) {
+    throw new NotYetImplementedForExchangeException("getIndexPrice");
+  }
 }
